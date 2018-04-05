@@ -28,7 +28,6 @@ describe('IlpNode', function () {
     it('should update the balances', async function () {
       const fulfillment = crypto.randomBytes(32)
       const executionCondition = sha256(fulfillment)
-      console.log({ fulfillment, executionCondition }, 'sending transaction')
       const lineNumber = await this.ilpNode1.sendTransaction({
         amount: '123',
         destination: 'g.yes',
@@ -37,20 +36,16 @@ describe('IlpNode', function () {
         data: Buffer.alloc(0)
       })
       assert.equal(lineNumber, 0)
-      console.log('transaction sent')
 
       // FIXME: why does getBalances return a Promise?
       const balances11 = await this.ilpNode1.getBalances()
       const balances12 = await this.ilpNode2.getBalances()
       assert.deepEqual(balances11, { current: 0, payable: 123, receivable: 0 })
       assert.deepEqual(balances12, { current: 0, payable: 0, receivable: 123 })
-      console.log('got balances; handling incoming')
 
       await this.ilpNode2.handleIncoming(0, {
         [executionCondition]: fulfillment
       })
-
-      console.log('incoming handled')
 
       // FIXME: why does getBalances return a Promise?
       const balances21 = await this.ilpNode1.getBalances()
