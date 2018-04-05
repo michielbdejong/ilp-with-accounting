@@ -15,7 +15,7 @@ class PeerJournal {
       req.on('data', (chunk) => { chunks.push(chunk) })
       req.on('end', async () => {
         const block = Buffer.concat(chunks)
-        const lineNumber = req.url.substring(1)
+        const lineNumber = parseInt(req.url.substring(1))
         res.writeHead(200)
         // start synchronous block
         if (this.journal.length === lineNumber && !this.talking) {
@@ -42,8 +42,8 @@ class PeerJournal {
         method: 'POST',
         body: block
       })
-      console.log(response)
-      if (response === 'OK') {
+      const responseBody = await response.text()
+      if (responseBody === 'OK') {
         this.journal.push({ lineNumber, fromMe: true, block })
         this.talking = false
         return lineNumber
