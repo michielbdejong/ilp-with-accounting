@@ -1,5 +1,6 @@
 const PeerJournal = require('./peerJournal')
 const TransactionJournal = require('./transactionJournal')
+const IlpPacket = require('ilp-packet')
 
 class IlpNode {
   constructor (port, peerUrl) {
@@ -12,15 +13,15 @@ class IlpNode {
   async stop () {
     await this.peerJournal.stop()
   }
-  getBalances () {
+  async getBalances () {
     this.transactionJournal.updateBalances()
-    return this.transactionJournal.balances
+    return this.transactionJournal.balance
   }
   sendTransaction (obj) {
     const packet = IlpPacket.serializeIlpPrepare(obj)
     return this.peerJournal.addToJournal(packet)
   }
-  handleIncoming (fromLineNumber, fulfillments) {
+  async handleIncoming (fromLineNumber, fulfillments) {
     const upToLineNumber = this.peerJournal.journal.length
     for (let i = fromLineNumber; i < upToLineNumber; i++) {
       const entry = this.peerJournal.journal[i]
@@ -29,22 +30,23 @@ class IlpNode {
       }
       const obj = IlpPacket.deserializeIlpPacket(entry.block)
       if (obj.typeString === 'ilp_prepare') {
+        let packet
         if (new Date(obj.data.expiresAt).getTime() < new Date().getTime()) {
-          const packet = IlpPacket.serializeIlpReject({
+          packet = IlpPacket.serializeIlpReject({
             code: 'F00',
             triggeredBy: 'g.us.nexus.gateway',
             message: 'more details, human-readable',
-            data: obj.executionCondition // used as identifier to link this result to the corresponding Prepare packet
+            data: obj.data.executionCondition // used as identifier to link this result to the corresponding Prepare packet
             // TODO: support fulfilling/rejecting with application-level data
           })
         } else if (fulfillments[obj.data.executionCondition]) {
-          const packet = IlpPacket.serializeIlpFulfill({
+          packet = IlpPacket.serializeIlpFulfill({
             fulfillment: fulfillments[obj.data.executionCondition],
-            data: obj.executionCondition // used as identifier to link this result to the corresponding Prepare packet
+            data: obj.data.executionCondition // used as identifier to link this result to the corresponding Prepare packet
             // TODO: support fulfilling/rejecting with application-level data
           })
         }
-        this.peerJournal.addToJournal(packet)
+        await this.peerJournal.addToJournal(packet)
       }
     }
     return upToLineNumber

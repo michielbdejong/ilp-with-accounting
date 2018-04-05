@@ -33,6 +33,7 @@
     "nyc": "^11.6.0"
   },
   "dependencies": {
+    "ilp-packet": "^2.2.0",
     "node-fetch": "^2.1.2"
   }
 }
