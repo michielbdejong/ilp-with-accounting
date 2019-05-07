@@ -1,5 +1,7 @@
 # ilp-with-accounting
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/michielbdejong/ilp-with-accounting.svg)](https://greenkeeper.io/)
+
 This exploratory implementation of ILP+accounting deals with resending messages if no ack arrives, and has a semaphore for adding transfers to the log, which prevents the two peers from "talking at the same time".
 
 I wrote it in a few hours, but I think it correctly addresses the basic idea of SNAP. It's based on http-oer, but similar message flows could also be done on top of WebSockets.
